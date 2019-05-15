@@ -500,7 +500,7 @@ $ aws cloudformation create-stack \
 --template-body file://~/environment/calculator-backend/aws-cfn/customvpc.yml
 ```
 
-### Step 3: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
+## Step 3: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
 ```
 $ aws cloudformation describe-stacks \
 --stack-name CustomVPCStack
