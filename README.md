@@ -7,7 +7,7 @@
 - A Security Group - Allows your docker containers to receive traffic on port 8080 from the Internet through the Network Load Balancer.
 - IAM Roles - Identity and Access Management Roles are created.
 
-## Step 1: Modify the Template
+## Step 1: Modify the Core Template
 ```
 $ cd ~/environment/calculator-backend
 $ mkdir aws-cfn
@@ -44,6 +44,7 @@ Mappings:
       CIDR: '10.0.2.0/24'
     PrivateTwo:
       CIDR: '10.0.3.0/24'
+
 Resources:
   # VPC in which containers will be networked.
   # It has two public subnets, and two private subnets.
@@ -222,6 +223,60 @@ Resources:
           - CidrIp: !FindInMap ['SubnetConfig', 'VPC', 'CIDR']
             IpProtocol: -1
 
+# These are the values output by the CloudFormation template. Be careful
+# about changing any of them, because of them are exported with specific
+# names so that the other task related CF templates can use them.
+Outputs:
+  CurrentRegion:
+    Description: REPLACE_ME_REGION
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CurrentRegion' ] ]
+  CurrentAccount:
+    Description: REPLACE_ME_ACCOUNT_ID
+    Value: !Ref AWS::AccountId
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CurrentAccount' ] ]
+  VPCId:
+    Description: REPLACE_ME_VPC_ID
+    Value: !Ref 'VPC'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'VPCId' ] ]
+  PublicSubnetOne:
+    Description: REPLACE_ME_PUBLIC_SUBNET_ONE
+    Value: !Ref 'PublicSubnetOne'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PublicSubnetOne' ] ]
+  PublicSubnetTwo:
+    Description: REPLACE_ME_PUBLIC_SUBNET_TWO
+    Value: !Ref 'PublicSubnetTwo'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PublicSubnetTwo' ] ]
+  PrivateSubnetOne:
+    Description: REPLACE_ME_PRIVATE_SUBNET_ONE
+    Value: !Ref 'PrivateSubnetOne'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PrivateSubnetOne' ] ]
+  PrivateSubnetTwo:
+    Description: REPLACE_ME_PRIVATE_SUBNET_TWO
+    Value: !Ref 'PrivateSubnetTwo'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PrivateSubnetTwo' ] ]
+  FargateContainerSecurityGroup:
+    Description: REPLACE_ME_SECURITY_GROUP_ID
+    Value: !Ref 'FargateContainerSecurityGroup'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'FargateContainerSecurityGroup' ] ]
+```
+
+## Step 2: IAM Roles
+```
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This stack deploys the core network infrastructure and IAM resources
+             to be used for a service hosted in Amazon ECS using AWS Fargate.
+
+Resources:
   # This is an IAM role which authorizes ECS to manage resources on your
   # account on your behalf, such as updating your load balancer with the
   # details of where your containers are, so that traffic can reach your
@@ -424,22 +479,11 @@ Resources:
             - "ecr:InitiateLayerUpload"
             - "ecr:GetAuthorizationToken"
             Resource: "*"
-
-
+            
 # These are the values output by the CloudFormation template. Be careful
 # about changing any of them, because of them are exported with specific
 # names so that the other task related CF templates can use them.
 Outputs:
-  CurrentRegion:
-    Description: REPLACE_ME_REGION
-    Value: !Ref AWS::Region
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CurrentRegion' ] ]
-  CurrentAccount:
-    Description: REPLACE_ME_ACCOUNT_ID
-    Value: !Ref AWS::AccountId
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CurrentAccount' ] ]
   EcsServiceRole:
     Description: REPLACE_ME_ECS_SERVICE_ROLE_ARN
     Value: !GetAtt 'EcsServiceRole.Arn'
@@ -450,36 +494,6 @@ Outputs:
     Value: !GetAtt 'ECSTaskRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSTaskRole' ] ]
-  VPCId:
-    Description: REPLACE_ME_VPC_ID
-    Value: !Ref 'VPC'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'VPCId' ] ]
-  PublicSubnetOne:
-    Description: REPLACE_ME_PUBLIC_SUBNET_ONE
-    Value: !Ref 'PublicSubnetOne'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PublicSubnetOne' ] ]
-  PublicSubnetTwo:
-    Description: REPLACE_ME_PUBLIC_SUBNET_TWO
-    Value: !Ref 'PublicSubnetTwo'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PublicSubnetTwo' ] ]
-  PrivateSubnetOne:
-    Description: REPLACE_ME_PRIVATE_SUBNET_ONE
-    Value: !Ref 'PrivateSubnetOne'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PrivateSubnetOne' ] ]
-  PrivateSubnetTwo:
-    Description: REPLACE_ME_PRIVATE_SUBNET_TWO
-    Value: !Ref 'PrivateSubnetTwo'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'PrivateSubnetTwo' ] ]
-  FargateContainerSecurityGroup:
-    Description: REPLACE_ME_SECURITY_GROUP_ID
-    Value: !Ref 'FargateContainerSecurityGroup'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'FargateContainerSecurityGroup' ] ]
   CodeBuildRole:
     Description: REPLACE_ME_CODEBUILD_ROLE_ARN
     Value: !GetAtt 'ModernAppBackendCodeBuildServiceRole.Arn'
@@ -492,16 +506,28 @@ Outputs:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ModernAppBackendCodePipelineServiceRole' ] ]
 ```
 
-## Step 2: Create the Stack
+## Step 3: Create the Stack
 ```
 $ aws cloudformation create-stack \
---stack-name CustomVPCStack \
+--stack-name MyProjectVPCStack \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://~/environment/calculator-backend/aws-cfn/customvpc.yml
+--template-body file://~/environment/calculator-backend/aws-cfn/my-project-stack-vpc.yml
 ```
 
-## Step 3: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
+```
+$ aws cloudformation create-stack \
+--stack-name MyProjectIAMRolesStack \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-body file://~/environment/calculator-backend/aws-cfn/my-project-stack-iam-roles.yml
+```
+
+## Step 4: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
 ```
 $ aws cloudformation describe-stacks \
---stack-name CustomVPCStack
+--stack-name MyProjectStackVPC
+```
+
+```
+$ aws cloudformation describe-stacks \
+--stack-name MyProjectStackIAMRoles
 ```
