@@ -9,9 +9,9 @@
 
 ## Step 1: Modify the Core Template
 ```
-$ cd ~/environment/calculator-backend
+$ cd ~/environment/myproject-product-restapi
 $ mkdir aws-cfn
-$ vi ~/environment/calculator-backend/aws-cfn/customvpc.yml
+$ vi ~/environment/myproject-product-restapi/aws-cfn/customvpc.yml
 ```
 ```
 ---
@@ -80,8 +80,7 @@ Resources:
       MapPublicIpOnLaunch: true
 
   # Two private subnets where containers will only have private
-  # IP addresses, and will only be reachable by other members of the
-  # VPC
+  # IP addresses, and will only be reachable by other members of the VPC
   PrivateSubnetOne:
     Type: AWS::EC2::Subnet
     Properties:
@@ -269,12 +268,11 @@ Outputs:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'FargateContainerSecurityGroup' ] ]
 ```
 
-## Step 2: IAM Roles
+## Step 2: ECS Roles
 ```
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This stack deploys the core network infrastructure and IAM resources
-             to be used for a service hosted in Amazon ECS using AWS Fargate.
+Description: This stack deploys the IAM Role
 
 Resources:
   # This is an IAM role which authorizes ECS to manage resources on your
