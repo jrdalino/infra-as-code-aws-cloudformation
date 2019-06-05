@@ -377,106 +377,6 @@ Resources:
                 - 'dynamodb:UpdateItem'
                 - 'dynamodb:GetItem'
               Resource: 'arn:aws:dynamodb:*:*:table/ModernAppTable*'
-
-  # An IAM role that allows the AWS CodePipeline service to perform it's
-  # necessary actions. We have intentionally left permissions on this role
-  # that will not be used by the CodePipeline service during this workshop.
-  # This will allow you to more simply use CodePipeline in the future should
-  # you want to use the service for Pipelines that interact with different
-  # AWS services than the ones used in this workshop.
-  ModernAppBackendCodePipelineServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: ModernAppBackendCodePipelineServiceRole
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - codepipeline.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: "/"
-      Policies:
-      - PolicyName: ModernAppBackend-codepipeline-service-policy
-        PolicyDocument:
-          Statement:
-          - Action:
-            - codecommit:GetBranch
-            - codecommit:GetCommit
-            - codecommit:UploadArchive
-            - codecommit:GetUploadArchiveStatus
-            - codecommit:CancelUploadArchive
-            Resource: "*"
-            Effect: Allow
-          - Action:
-            - s3:GetObject
-            - s3:GetObjectVersion
-            - s3:GetBucketVersioning
-            Resource: "*"
-            Effect: Allow
-          - Action:
-            - s3:PutObject
-            Resource:
-            - arn:aws:s3:::*
-            Effect: Allow
-          - Action:
-            - elasticloadbalancing:*
-            - autoscaling:*
-            - cloudwatch:*
-            - ecs:*
-            - codebuild:*
-            - iam:PassRole
-            Resource: "*"
-            Effect: Allow
-          Version: "2012-10-17"
-
-  # An IAM role that allows the AWS CodeBuild service to perform the actions
-  # required to complete a build of our source code retrieved from CodeCommit,
-  # and push the created image to ECR.
-  ModernAppBackendCodeBuildServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: ModernAppBackendCodeBuildServiceRole
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          Effect: Allow
-          Principal:
-            Service: codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-      - PolicyName: "ModernAppBackend-CodeBuildServicePolicy"
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: "Allow"
-            Action:
-            - "codecommit:ListBranches"
-            - "codecommit:ListRepositories"
-            - "codecommit:BatchGetRepositories"
-            - "codecommit:Get*"
-            - "codecommit:GitPull"
-            Resource:
-            - Fn::Sub: arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:ModernAppBackendRepository
-          - Effect: "Allow"
-            Action:
-            - "logs:CreateLogGroup"
-            - "logs:CreateLogStream"
-            - "logs:PutLogEvents"
-            Resource: "*"
-          - Effect: "Allow"
-            Action:
-            - "s3:PutObject"
-            - "s3:GetObject"
-            - "s3:GetObjectVersion"
-            - "s3:ListBucket"
-            Resource: "*"
-          - Effect: "Allow"
-            Action:
-            - "ecr:InitiateLayerUpload"
-            - "ecr:GetAuthorizationToken"
-            Resource: "*"
             
 # These are the values output by the CloudFormation template. Be careful
 # about changing any of them, because of them are exported with specific
@@ -492,40 +392,30 @@ Outputs:
     Value: !GetAtt 'ECSTaskRole.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSTaskRole' ] ]
-  CodeBuildRole:
-    Description: REPLACE_ME_CODEBUILD_ROLE_ARN
-    Value: !GetAtt 'ModernAppBackendCodeBuildServiceRole.Arn'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ModernAppBackendCodeBuildServiceRole' ] ]
-  CodePipelineRole:
-    Description: REPLACE_ME_CODEPIPELINE_ROLE_ARN
-    Value: !GetAtt 'ModernAppBackendCodePipelineServiceRole.Arn'
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ModernAppBackendCodePipelineServiceRole' ] ]
 ```
 
 ## Step 3: Create the Stack
 ```
 $ aws cloudformation create-stack \
---stack-name MyProjectVPCStack \
+--stack-name MyprojectCustomvpcStack \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://~/environment/calculator-backend/aws-cfn/my-project-stack-vpc.yml
+--template-body file://~/environment/myproject-product-restapi/aws-cfn/myproject-customvpc-stack.yml
 ```
 
 ```
 $ aws cloudformation create-stack \
---stack-name MyProjectIAMRolesStack \
+--stack-name MyprojectEcstaskandservicerolesStack \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://~/environment/calculator-backend/aws-cfn/my-project-stack-iam-roles.yml
+--template-body file://~/environment/calculator-backend/aws-cfn/myproject-ecstaskservicerole-stack.yml
 ```
 
 ## Step 4: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
 ```
 $ aws cloudformation describe-stacks \
---stack-name MyProjectStackVPC
+--stack-name MyprojectCustomvpcStack
 ```
 
 ```
 $ aws cloudformation describe-stacks \
---stack-name MyProjectStackIAMRoles
+--stack-name MyprojectEcstaskandservicerolesStack
 ```
