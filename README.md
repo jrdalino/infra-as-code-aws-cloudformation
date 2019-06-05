@@ -11,7 +11,8 @@
 ```
 $ cd ~/environment/myproject-product-restapi
 $ mkdir aws-cfn
-$ vi ~/environment/myproject-product-restapi/aws-cfn/customvpc.yml
+$ vi ~/environment/myproject-product-restapi/aws-cfn/myproject-customvpc-stack.yml
+$ vi ~/environment/myproject-product-restapi/aws-cfn/myproject-ecstaskservicerole-stack.yml
 ```
 ```
 ---
@@ -406,7 +407,7 @@ $ aws cloudformation create-stack \
 $ aws cloudformation create-stack \
 --stack-name MyprojectEcstaskandservicerolesStack \
 --capabilities CAPABILITY_NAMED_IAM \
---template-body file://~/environment/calculator-backend/aws-cfn/myproject-ecstaskservicerole-stack.yml
+--template-body file://~/environment/myproject-product-restapi/aws-cfn/myproject-ecstaskservicerole-stack.yml
 ```
 
 ## Step 4: Verify completion of Stack Creation "StackStatus": "CREATE_COMPLETE"
